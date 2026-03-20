@@ -82,21 +82,35 @@ jobs:
 
       - name: Ensure namespace exists
         run: |
-          for attempt in 1 2 3 4 5; do
-            kubectl create namespace project-prj-1774032926419827044 --dry-run=client -o yaml | kubectl apply --validate=false -f - && break
-            echo "namespace apply retry $attempt failed"
-            sleep 10
-          done
+          retry_or_fail() {
+            description="$1"
+            shift
+            for attempt in 1 2 3 4 5; do
+              if "$@"; then
+                return 0
+              fi
+              echo "$description retry $attempt failed"
+              sleep 10
+            done
+            echo "$description failed after 5 attempts"
+            return 1
+          }
+          retry_or_fail "namespace apply" sh -c 'kubectl create namespace project-prj-1774039889117677000 --dry-run=client -o yaml | kubectl apply --validate=false -f -'
 
       - name: Deploy manifests
         run: |
-          for attempt in 1 2 3 4 5; do
-            sed "s#IMAGE_PLACEHOLDER#ghcr.io/${{ github.repository_owner }}/exams-example-service:${{ github.sha }}#g" k8s/example-service/deployment.yaml | kubectl -n project-prj-1774032926419827044 apply --validate=false -f - && break
-            echo "deployment apply retry $attempt failed"
-            sleep 10
-          done
-          for attempt in 1 2 3 4 5; do
-            kubectl -n project-prj-1774032926419827044 apply --validate=false -f k8s/example-service/service.yaml && break
-            echo "service apply retry $attempt failed"
-            sleep 10
-          done
+          retry_or_fail() {
+            description="$1"
+            shift
+            for attempt in 1 2 3 4 5; do
+              if "$@"; then
+                return 0
+              fi
+              echo "$description retry $attempt failed"
+              sleep 10
+            done
+            echo "$description failed after 5 attempts"
+            return 1
+          }
+          retry_or_fail "deployment apply" sh -c 'sed "s#IMAGE_PLACEHOLDER#ghcr.io/${{ github.repository_owner }}/exams-example-service:${{ github.sha }}#g" k8s/example-service/deployment.yaml | kubectl -n project-prj-1774039889117677000 apply --validate=false -f -'
+          retry_or_fail "service apply" kubectl -n project-prj-1774039889117677000 apply --validate=false -f k8s/example-service/service.yaml
