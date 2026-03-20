@@ -34,7 +34,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/exams-example-service:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/exams-exams:${{ github.sha }}
 
       - name: Configure kubectl
         run: |
@@ -78,12 +78,12 @@ jobs:
       - name: Deploy manifests
         run: |
           for attempt in 1 2 3 4 5; do
-            sed "s#IMAGE_PLACEHOLDER#ghcr.io/${{ github.repository_owner }}/exams-example-service:${{ github.sha }}#g" k8s/example-service/deployment.yaml | kubectl -n project-prj-1774032926419827044 apply --validate=false -f - && break
+            sed "s#IMAGE_PLACEHOLDER#ghcr.io/${{ github.repository_owner }}/exams-exams:${{ github.sha }}#g" k8s/exams/deployment.yaml | kubectl -n project-prj-1774032926419827044 apply --validate=false -f - && break
             echo "deployment apply retry $attempt failed"
             sleep 10
           done
           for attempt in 1 2 3 4 5; do
-            kubectl -n project-prj-1774032926419827044 apply --validate=false -f k8s/example-service/service.yaml && break
+            kubectl -n project-prj-1774032926419827044 apply --validate=false -f k8s/exams/service.yaml && break
             echo "service apply retry $attempt failed"
             sleep 10
           done
